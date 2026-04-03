@@ -3,7 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ePubReader™</title>
+<title>epubReader™</title>
+
+<!-- 🔧 PWA META TAGS (FIXED) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<!-- iOS/iPadOS Home Screen Icons -->
+<link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<!-- iOS: Prevent zoom on input focus -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
@@ -15,6 +26,7 @@ body{
     background:#f4f4f4;
     color:#222;
     transition:.3s;
+    -webkit-tap-highlight-color: transparent;
 }
 header{
     display:flex;
@@ -24,6 +36,9 @@ header{
     padding:10px;
     background:white;
     box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 button,label,select,input{
     padding:8px 12px;
@@ -32,16 +47,18 @@ button,label,select,input{
     background:#2563eb;
     color:white;
     cursor:pointer;
+    font-size: 14px;
 }
 input[type="text"]{
     background:white;
     color:black;
+    min-width: 150px;
 }
 #fileInput{display:none;}
 #viewer{height:calc(100vh - 100px);}
 #progressBarContainer{height:4px;background:#ddd;}
 #progressBar{height:100%;width:0;background:#2563eb;transition:.2s;}
-#pageInfo{font-weight:600;}
+#pageInfo{font-weight:600; align-self: center;}
 
 .panel{
     position:fixed;
@@ -120,6 +137,7 @@ input[type="text"]{
     box-shadow:0 10px 30px rgba(0,0,0,0.3);
     display:none;
     max-width:500px;
+    z-index: 3000;
 }
 
 .darkUI{
@@ -131,35 +149,43 @@ input[type="text"]{
 .darkUI .item:hover,
 .darkUI .resultItem:hover{background:#333;}
 .darkUI #searchResults{background:#1c1c1c;color:#eee;}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    header { padding: 8px; gap: 6px; }
+    button, label, select, input { padding: 6px 10px; font-size: 13px; }
+    #searchResults { width: calc(100% - 20px); right: 10px; top: 100px; }
+    .panel { width: 100%; left: -100%; }
+}
 </style>
 </head>
 <body>
 
 <header>
-<label for="fileInput">Load EPUB</label>
+<label for="fileInput">📚 Load EPUB</label>
 <input type="file" id="fileInput" accept=".epub">
 
-<button id="prev">Prev</button>
-<button id="next">Next</button>
+<button id="prev">◀ Prev</button>
+<button id="next">Next ▶</button>
 
-<button id="tocBtn">TOC</button>
+<button id="tocBtn">📑 TOC</button>
 
-<button id="addBookmarkBtn">Add Bookmark</button>
-<button id="bookmarkPanelBtn">Bookmarks</button>
+<button id="addBookmarkBtn">🔖 Add</button>
+<button id="bookmarkPanelBtn">🔖 List</button>
 
-<button id="dictionaryBtn">Dictionary</button>
+<button id="dictionaryBtn">📖 Dictionary</button>
 
 <button id="fontPlus">A+</button>
 <button id="fontMinus">A-</button>
 
 <select id="themeSelect">
-<option value="light">Light</option>
-<option value="dark">Dark</option>
-<option value="sepia">Sepia</option>
+<option value="light">☀️ Light</option>
+<option value="dark">🌙 Dark</option>
+<option value="sepia">📜 Sepia</option>
 </select>
 
-<input type="text" id="searchInput" placeholder="Search text">
-<button id="searchBtn">Search</button>
+<input type="text" id="searchInput" placeholder="🔍 Search...">
+<button id="searchBtn">Go</button>
 
 <span id="pageInfo"></span>
 </header>
@@ -169,7 +195,7 @@ input[type="text"]{
 
 <div id="tocPanel" class="panel">
 <div class="panelHeader">
-<span>Table of Contents</span>
+<span>📑 Table of Contents</span>
 <button onclick="togglePanel('tocPanel')">✕</button>
 </div>
 <div id="tocContent" class="panelContent"></div>
@@ -177,7 +203,7 @@ input[type="text"]{
 
 <div id="bookmarkPanel" class="panel">
 <div class="panelHeader">
-<span>Bookmarks</span>
+<span>🔖 Bookmarks</span>
 <button onclick="togglePanel('bookmarkPanel')">✕</button>
 </div>
 <div id="bookmarkContent" class="panelContent"></div>
@@ -192,7 +218,7 @@ let currentFont = 100;
 let selectedWord = "";
 let currentBookKey = "";
 
-// ---------- THEME HANDLING (FIXED: always consistent) ----------
+// ---------- THEME HANDLING ----------
 let currentTheme = localStorage.getItem("epub-theme") || "light";
 
 function registerThemes() {
@@ -201,28 +227,23 @@ function registerThemes() {
     rendition.themes.register("sepia",  {"html, body": {background: "#f4ecd8", color: "#5b4636"}});
 }
 
-// Apply theme to current rendition + UI + localStorage
 function setTheme(theme) {
     currentTheme = theme;
     localStorage.setItem("epub-theme", theme);
-    // Update UI class
     document.body.classList.toggle("darkUI", theme === "dark");
-    // Update dropdown
     document.getElementById("themeSelect").value = theme;
-    // Apply to current rendition if it exists
     if (rendition) {
         rendition.themes.select(theme);
     }
 }
 
-// Hook to guarantee theme on every new chapter
 function attachThemeHook() {
     rendition.hooks.content.register((doc, data) => {
         rendition.themes.select(currentTheme);
     });
 }
 
-// ---------- LOAD EPUB (with cleanup) ----------
+// ---------- LOAD EPUB ----------
 document.getElementById("fileInput").addEventListener("change", e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -233,8 +254,8 @@ document.getElementById("fileInput").addEventListener("change", e => {
     rendition = book.renderTo("viewer", { width: "100%", height: "100%" });
 
     registerThemes();
-    attachThemeHook();               // will apply currentTheme to every chapter
-    setTheme(currentTheme);          // ensures first chapter & UI are correct
+    attachThemeHook();
+    setTheme(currentTheme);
 
     rendition.display();
 
@@ -255,15 +276,15 @@ document.getElementById("next").onclick = () => rendition && rendition.next();
 
 // ---------- FONT ----------
 document.getElementById("fontPlus").onclick = () => {
-    currentFont += 10;
+    currentFont = Math.min(currentFont + 10, 200);
     rendition.themes.fontSize(currentFont + "%");
 };
 document.getElementById("fontMinus").onclick = () => {
-    currentFont -= 10;
+    currentFont = Math.max(currentFont - 10, 80);
     rendition.themes.fontSize(currentFont + "%");
 };
 
-// ---------- THEME SELECT DROPDOWN ----------
+// ---------- THEME SELECT ----------
 document.getElementById("themeSelect").onchange = e => setTheme(e.target.value);
 
 // ---------- PROGRESS ----------
@@ -273,7 +294,7 @@ function setupLocations() {
         rendition.on("relocated", loc => {
             const current = book.locations.locationFromCfi(loc.start.cfi);
             if (current && total) {
-                document.getElementById("pageInfo").textContent = `Page ${current} / ${total}`;
+                document.getElementById("pageInfo").textContent = `📄 ${current} / ${total}`;
                 document.getElementById("progressBar").style.width = ((current / total) * 100) + "%";
             }
         });
@@ -292,20 +313,20 @@ function buildTOC() {
         nav.toc.forEach(ch => {
             const div = document.createElement("div");
             div.className = "item";
-            div.innerHTML = `<span>${ch.label}</span>`;
-            div.onclick = () => rendition.display(ch.href);
+            div.innerHTML = `<span>📖 ${ch.label}</span>`;
+            div.onclick = () => { rendition.display(ch.href); togglePanel("tocPanel"); };
             toc.appendChild(div);
         });
     });
 }
 
-// ---------- SEARCH (FIXED: precise CFI + navigation) ----------
+// ---------- SEARCH ----------
 document.getElementById("searchBtn").onclick = () => {
     const q = document.getElementById("searchInput").value.trim();
     if (!q) return;
 
     const container = document.getElementById("searchResults");
-    container.innerHTML = `<div class="searchHeader">Results <button onclick="document.getElementById('searchResults').style.display='none'">✕</button></div>Searching...`;
+    container.innerHTML = `<div class="searchHeader">🔍 Results <button onclick="document.getElementById('searchResults').style.display='none'">✕</button></div><p>Searching...</p>`;
     container.style.display = "block";
 
     let results = [];
@@ -317,7 +338,6 @@ document.getElementById("searchBtn").onclick = () => {
             try {
                 const doc = item.document;
                 const cfiBase = item.cfiBase;
-                // Find first text occurrence using tree walker (case‑insensitive)
                 const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, {
                     acceptNode: (node) => {
                         if (node.textContent.toLowerCase().includes(q.toLowerCase()))
@@ -330,25 +350,21 @@ document.getElementById("searchBtn").onclick = () => {
                     const text = firstTextNode.textContent;
                     const index = text.toLowerCase().indexOf(q.toLowerCase());
                     if (index !== -1) {
-                        // create range around the exact match
                         const range = doc.createRange();
                         range.setStart(firstTextNode, index);
                         range.setEnd(firstTextNode, index + q.length);
-                        // generate precise CFI using epub.CFI.fromRange
                         if (typeof ePub.CFI !== 'undefined' && ePub.CFI.fromRange) {
                             const preciseCfi = ePub.CFI.fromRange(range, cfiBase);
-                            // excerpt for display
                             const start = Math.max(0, index - 40);
                             const excerpt = text.substring(start, index + 40);
                             results.push({ cfi: preciseCfi, excerpt });
                         } else {
-                            // fallback: chapter start (should not happen with current epub.js)
                             const excerpt = text.substring(Math.max(0, index - 40), index + 40);
                             results.push({ cfi: cfiBase, excerpt });
                         }
                     }
                 }
-            } catch (err) { /* ignore problematic items */ }
+            } catch (err) { /* ignore */ }
             item.unload();
             done++;
             if (done === spine.length) renderSearchResults(results);
@@ -358,15 +374,15 @@ document.getElementById("searchBtn").onclick = () => {
 
 function renderSearchResults(results) {
     const container = document.getElementById("searchResults");
-    container.innerHTML = `<div class="searchHeader">Results <button onclick="document.getElementById('searchResults').style.display='none'">✕</button></div>`;
+    container.innerHTML = `<div class="searchHeader">🔍 Results <button onclick="document.getElementById('searchResults').style.display='none'">✕</button></div>`;
     if (results.length === 0) {
-        container.innerHTML += "<p>No results found.</p>";
+        container.innerHTML += "<p>😕 No results found.</p>";
         return;
     }
     results.forEach(r => {
         const div = document.createElement("div");
         div.className = "resultItem";
-        div.textContent = r.excerpt + " …";
+        div.textContent = "… " + r.excerpt + " …";
         div.onclick = () => {
             rendition.display(r.cfi);
             container.style.display = "none";
@@ -382,17 +398,24 @@ function enableSelection() {
     });
 }
 document.getElementById("dictionaryBtn").onclick = () => {
-    if (!selectedWord) { alert("Select a word first."); return; }
+    if (!selectedWord) { alert("👆 Select a word first, then tap Dictionary."); return; }
     const popup = document.getElementById("popup");
     popup.style.display = "block";
-    popup.innerHTML = "Loading...";
+    popup.innerHTML = "🔎 Loading definition...";
     fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + selectedWord)
         .then(r => r.json())
         .then(data => {
-            if (data.title) { popup.innerHTML = "No definition found.<br><br><button onclick='document.getElementById(\"popup\").style.display=\"none\"'>Close</button>"; return; }
-            popup.innerHTML = "<b>" + selectedWord + "</b><br><br>" +
-                data[0].meanings[0].definitions[0].definition +
-                "<br><br><button onclick='document.getElementById(\"popup\").style.display=\"none\"'>Close</button>";
+            if (data.title) { 
+                popup.innerHTML = `❌ No definition found for "<b>${selectedWord}</b>".<br><br><button onclick='document.getElementById("popup").style.display="none"'>Close</button>`; 
+                return; 
+            }
+            const entry = data[0];
+            const meaning = entry.meanings?.[0];
+            const definition = meaning?.definitions?.[0]?.definition || "No definition available.";
+            popup.innerHTML = `<b>📖 ${selectedWord}</b><br><br><i>${meaning?.partOfSpeech || ""}</i><br><br>${definition}<br><br><button onclick='document.getElementById("popup").style.display="none"'>Close</button>`;
+        })
+        .catch(() => {
+            popup.innerHTML = "⚠️ Network error. Check your connection.<br><br><button onclick='document.getElementById(\"popup\").style.display=\"none\"'>Close</button>";
         });
 };
 
@@ -406,6 +429,9 @@ document.getElementById("addBookmarkBtn").onclick = () => {
         data.push(cfi);
         localStorage.setItem(currentBookKey, JSON.stringify(data));
         updateBookmarkPanel();
+        showPopup("✅ Bookmark added!");
+    } else {
+        showPopup("📌 Already bookmarked");
     }
 };
 document.getElementById("bookmarkPanelBtn").onclick = () => {
@@ -417,14 +443,14 @@ function updateBookmarkPanel() {
     content.innerHTML = "";
     let data = JSON.parse(localStorage.getItem(currentBookKey) || "[]");
     if (data.length === 0) {
-        content.innerHTML = "No bookmarks for this book.";
+        content.innerHTML = "<p>📭 No bookmarks yet.<br><br>Tap <b>🔖 Add</b> while reading to save your place.</p>";
         return;
     }
     data.forEach((cfi, i) => {
         const row = document.createElement("div");
         row.className = "item";
-        row.innerHTML = `<span>Bookmark ${i + 1}</span><button onclick="deleteBookmark('${cfi}')">✕</button>`;
-        row.querySelector("span").onclick = () => rendition.display(cfi);
+        row.innerHTML = `<span>🔖 Bookmark ${i + 1}</span><button onclick="deleteBookmark('${cfi}')">✕</button>`;
+        row.querySelector("span").onclick = () => { rendition.display(cfi); togglePanel("bookmarkPanel"); };
         content.appendChild(row);
     });
 }
@@ -435,7 +461,15 @@ function deleteBookmark(cfi) {
     updateBookmarkPanel();
 }
 
-// ── PWA: Service Worker Registration (NEW) ─────────────────────────────
+// ---------- POPUP HELPER ----------
+function showPopup(msg) {
+    const popup = document.getElementById("popup");
+    popup.innerHTML = msg + `<br><br><button onclick="document.getElementById('popup').style.display='none'">OK</button>`;
+    popup.style.display = "block";
+    setTimeout(() => { if(popup.style.display !== 'none') popup.style.display = 'none'; }, 3000);
+}
+
+// ── PWA: Service Worker Registration ─────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
@@ -443,6 +477,14 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.warn('⚠️ SW failed:', err));
   });
 }
+
+// ── PWA: BeforeInstallPrompt (for better UX) ─────────────────────
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('💡 PWA install prompt available');
+});
 </script>
 </body>
 </html>
