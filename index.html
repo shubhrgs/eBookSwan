@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>epubSwan™</title>
+<title>epubSwan™ – complete reader</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563eb">
@@ -18,38 +18,34 @@
 <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
 
 <style>
-/* ── Reset & Base ───────────────────────────────────────────── */
+/* ---------- RESET & BASE ---------- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html, body {
   height: 100%;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #f0f2f5;
-  color: #1a1a2e;
-  -webkit-tap-highlight-color: rgba(37, 99, 235, 0.15);
+  color: #1e293b;
+  -webkit-tap-highlight-color: rgba(37, 99, 235, 0.2);
   touch-action: manipulation;
   overscroll-behavior: none;
 }
 
-/* ── App Shell ──────────────────────────────────────────────── */
+/* ---------- APP SHELL ---------- */
 #app {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  height: 100vh;
   position: relative;
 }
 
-/* ── Header Wrapper ─────────────────────────────────────────── */
+/* ---------- COLLAPSIBLE HEADER ---------- */
 #headerWrap {
   flex-shrink: 0;
   overflow: hidden;
-  max-height: 160px;
-  transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.28s ease;
+  max-height: 180px;
+  transition: max-height 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.25s;
   opacity: 1;
-  will-change: max-height;
   z-index: 500;
 }
 #headerWrap.hidden {
@@ -57,654 +53,448 @@ html, body {
   opacity: 0;
 }
 
-/* Pill indicator */
+/* pill when header hidden */
 #headerPill {
   position: fixed;
   top: env(safe-area-inset-top, 0);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(37,99,235,0.82);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  color: #fff;
+  background: rgba(37, 99, 235, 0.94);
+  backdrop-filter: blur(8px);
+  color: white;
   font-size: 11px;
   font-weight: 600;
-  padding: 3px 14px;
-  border-radius: 0 0 12px 12px;
+  padding: 5px 18px;
+  border-radius: 0 0 24px 24px;
   z-index: 600;
   pointer-events: auto;
-  opacity: 0;
-  transition: opacity 0.25s;
   cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
-#headerWrap.hidden ~ #progressBarContainer + #viewer,
-body.hdr-hidden #headerPill { opacity: 1; }
-#headerWrap.hidden + #headerPill { opacity: 1; }
+#headerWrap.hidden ~ #headerPill {
+  opacity: 1;
+}
 
-/* ── Header ─────────────────────────────────────────────────── */
+/* header bar */
 header {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 6px;
   align-items: center;
   justify-content: center;
-  padding: 8px 10px;
+  padding: 8px 12px;
   padding-top: calc(8px + env(safe-area-inset-top, 0px));
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.09);
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   z-index: 501;
 }
 
-/* ── Buttons & Controls ──────────────────────────────────────── */
+/* buttons & inputs */
 button, label.btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 7px 11px;
+  gap: 6px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #2563eb;
-  color: #fff;
-  cursor: pointer;
+  color: white;
   font-size: 13px;
-  font-family: inherit;
   font-weight: 500;
-  white-space: nowrap;
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
+  cursor: pointer;
   min-height: 44px;
   min-width: 44px;
-  -webkit-appearance: none;
-  transition: background 0.15s, transform 0.1s;
-}
-button:active { transform: scale(0.95); }
-button.ghost {
-  background: transparent;
-  color: #2563eb;
-  border: 1.5px solid #2563eb;
-}
-button.danger { background: #ef4444; }
-
-select {
-  padding: 7px 10px;
-  border: 1.5px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  color: #374151;
-  font-size: 16px;
-  font-family: inherit;
-  cursor: pointer;
-  min-height: 44px;
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232563eb' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  padding-right: 26px;
+  transition: 0.1s linear;
   touch-action: manipulation;
 }
-
-#searchInput {
-  padding: 7px 11px;
-  border: 1.5px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  color: #374151;
-  font-size: 16px;
-  font-family: inherit;
-  width: 130px;
+button:active { transform: scale(0.96); background: #1d4ed8; }
+select, #searchInput {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  background: white;
+  font-size: 15px;
   min-height: 44px;
   outline: none;
-  -webkit-appearance: none;
-  touch-action: manipulation;
 }
-#searchInput:focus { border-color: #2563eb; }
-
+#searchInput { width: 150px; }
 #fileInput { display: none; }
-
 #pageInfo {
-  font-size: 11px;
-  font-weight: 700;
-  color: #6b7280;
-  letter-spacing: 0.02em;
-  padding: 2px 6px;
-  background: #f3f4f6;
-  border-radius: 20px;
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
+  background: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-/* ── Progress Bar ────────────────────────────────────────────── */
+/* progress bar */
 #progressBarContainer {
   height: 3px;
-  background: #e5e7eb;
+  background: #e2e8f0;
   flex-shrink: 0;
-  position: relative;
-  z-index: 499;
 }
 #progressBar {
   height: 100%;
   width: 0;
   background: linear-gradient(90deg, #2563eb, #60a5fa);
-  transition: width 0.35s ease;
-  border-radius: 0 2px 2px 0;
+  transition: width 0.25s;
 }
 
-/* ── Viewer ──────────────────────────────────────────────────── */
+/* viewer */
 #viewer {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   position: relative;
-  background: inherit;
-  overscroll-behavior-x: contain;
-  overscroll-behavior-y: none;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 
-/* ── Panel Overlay ───────────────────────────────────────────── */
+/* ---------- PANELS (TOC, BOOKMARKS) ---------- */
 #panelOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0,0,0,0.5);
   backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
   z-index: 999;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s;
+  transition: 0.25s;
 }
 #panelOverlay.visible {
   opacity: 1;
   pointer-events: auto;
 }
 
-/* ── Slide Panels ────────────────────────────────────────────── */
 .panel {
   position: fixed;
   top: 0;
   left: -105%;
-  width: min(320px, 88vw);
-  height: 100%;
+  width: min(340px, 88vw);
   height: 100dvh;
-  background: #fff;
-  box-shadow: 6px 0 30px rgba(0,0,0,0.2);
-  transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  box-shadow: 8px 0 30px rgba(0,0,0,0.2);
+  transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  overscroll-behavior: contain;
 }
 .panel.open { left: 0; }
-
 .panelHeader {
-  padding: 14px 14px;
-  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  padding: 16px;
   background: #2563eb;
-  color: #fff;
+  color: white;
   display: flex;
   justify-content: space-between;
-  align-items: center;
   font-weight: 700;
-  font-size: 15px;
-  flex-shrink: 0;
+  align-items: center;
 }
-.panelHeader button {
-  background: rgba(255,255,255,0.2);
-  padding: 5px 12px;
-  font-size: 15px;
-  min-height: auto;
-  border-radius: 6px;
-  min-width: auto;
-}
-
 .panelContent {
   flex: 1;
   overflow-y: auto;
+  padding: 12px;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  padding: 8px 6px;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
 
-/* ── TOC Items ───────────────────────────────────────────────── */
-.toc-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-  min-height: 44px;
-  touch-action: manipulation;
-}
-.toc-row:active { background: #eff6ff; }
-.toc-label {
-  flex: 1;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #1f2937;
-  cursor: pointer;
-  word-break: break-word;
-  user-select: none;
-}
-.toc-expand-btn {
-  flex-shrink: 0;
-  background: none !important;
-  color: #2563eb !important;
-  border: 1.5px solid #2563eb !important;
-  padding: 2px 7px !important;
-  font-size: 10px !important;
-  min-height: 28px !important;
-  min-width: 28px !important;
-  border-radius: 4px !important;
-  transform: none !important;
-  line-height: 1.4;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  touch-action: manipulation;
-}
-.toc-children {
-  display: none;
-  border-left: 2px solid #dbeafe;
-  margin-left: 12px;
-}
-.toc-children.open { display: block; }
-.toc-children .toc-label { font-size: 13px; color: #374151; }
-
-/* ── Bookmark Items ──────────────────────────────────────────── */
-.bm-row {
+/* TOC rows */
+.toc-row, .bm-row {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 8px;
-  border-radius: 8px;
-  transition: background 0.15s;
-  border-bottom: 1px solid #f3f4f6;
-  min-height: 44px;
-  touch-action: manipulation;
-}
-.bm-row:active { background: #eff6ff; }
-.bm-label {
-  flex: 1;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 14px;
-  color: #1f2937;
-  user-select: none;
+  min-height: 44px;
 }
+.toc-row:active, .bm-row:active { background: #eef2ff; }
+.toc-label, .bm-label {
+  flex: 1;
+  font-size: 14px;
+  word-break: break-word;
+}
+.toc-expand-btn {
+  background: none;
+  border: 1.5px solid #2563eb;
+  color: #2563eb;
+  border-radius: 8px;
+  padding: 2px 12px;
+  font-size: 11px;
+  min-width: auto;
+  min-height: 32px;
+}
+.toc-children {
+  display: none;
+  border-left: 2px solid #bfdbfe;
+  margin-left: 18px;
+}
+.toc-children.open { display: block; }
+
+/* bookmark delete */
 .bm-del {
-  background: #fef2f2 !important;
-  color: #ef4444 !important;
-  border: 1.5px solid #fca5a5 !important;
-  padding: 4px 10px !important;
-  font-size: 12px !important;
-  min-height: auto !important;
-  min-width: auto !important;
-  border-radius: 6px !important;
-  touch-action: manipulation;
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 12px;
 }
 
-/* ── Search Results Panel ────────────────────────────────────── */
+/* ---------- SEARCH MODAL (fixed: never disappears on scroll) ---------- */
+#searchBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(5px);
+  z-index: 1999;
+  display: none;
+}
 #searchResults {
   position: fixed;
-  inset: 10px;
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 12px 50px rgba(0,0,0,0.28);
-  display: none;
+  top: 8%;
+  left: 5%;
+  right: 5%;
+  bottom: 8%;
+  background: white;
+  border-radius: 32px;
+  display: flex;
   flex-direction: column;
   z-index: 2000;
   overflow: hidden;
+  box-shadow: 0 25px 50px -12px black;
+  display: none;
 }
 #searchResults.visible { display: flex; }
-
+#searchBackdrop.visible { display: block; }
 .searchHeader {
-  padding: 13px 14px;
+  padding: 18px;
   background: #2563eb;
-  color: #fff;
+  color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-weight: 700;
-  flex-shrink: 0;
-}
-.searchHeader button {
-  background: rgba(255,255,255,0.2);
-  padding: 4px 12px;
   font-size: 16px;
-  min-height: auto;
-  min-width: auto;
 }
-
 #searchList {
   flex: 1;
   overflow-y: auto;
+  padding: 12px;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  padding: 8px;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
-
 .result-item {
-  padding: 11px 10px;
-  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
   cursor: pointer;
-  margin-bottom: 4px;
-  border: 1.5px solid #f0f2f5;
-  transition: background 0.15s, border-color 0.15s;
-  touch-action: manipulation;
-  -webkit-user-select: none;
-  user-select: none;
-  min-height: 44px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  transition: 0.08s linear;
 }
-.result-item:active { background: #eff6ff; border-color: #bfdbfe; }
-.result-num {
-  font-size: 10px;
-  font-weight: 700;
-  color: #2563eb;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
+.result-item:active {
+  background: #dbeafe;
+  transform: scale(0.99);
 }
 .result-excerpt {
-  font-size: 13px;
-  line-height: 1.55;
-  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1e293b;
 }
 .result-excerpt mark {
-  background: #fef08a;
-  border-radius: 2px;
-  padding: 0 1px;
-  color: inherit;
-  font-weight: 600;
+  background: #fde047;
+  border-radius: 4px;
+  padding: 0 2px;
 }
 
-/* ── Dictionary Bottom Sheet ─────────────────────────────────── */
+/* ---------- DICTIONARY BOTTOM SHEET ---------- */
 #dictPopup {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -8px 40px rgba(0,0,0,0.22);
-  padding: 6px 20px 20px;
+  background: white;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -12px 40px rgba(0,0,0,0.2);
+  padding: 12px 20px 28px;
   padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   z-index: 3000;
   transform: translateY(100%);
-  transition: transform 0.36s cubic-bezier(0.4, 0, 0.2, 1);
-  max-height: 65vh;
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+  max-height: 70vh;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
 }
 #dictPopup.open { transform: translateY(0); }
 .dict-handle {
-  width: 36px;
-  height: 4px;
-  background: #d1d5db;
-  border-radius: 2px;
-  margin: 10px auto 16px;
+  width: 50px;
+  height: 5px;
+  background: #cbd5e1;
+  border-radius: 10px;
+  margin: 6px auto 18px;
   cursor: grab;
 }
 .dict-word {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 800;
-  color: #111827;
-  margin-bottom: 2px;
-}
-.dict-phonetic {
-  font-size: 14px;
-  color: #2563eb;
-  margin-bottom: 14px;
-}
-.dict-pos {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #2563eb;
-  margin-top: 12px;
   margin-bottom: 6px;
 }
 .dict-def {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #374151;
-  margin-bottom: 4px;
-}
-.dict-example {
-  font-size: 13px;
-  color: #9ca3af;
-  font-style: italic;
-  margin-bottom: 6px;
-  padding-left: 10px;
-  border-left: 2px solid #e5e7eb;
+  margin: 12px 0;
+  line-height: 1.5;
 }
 
-/* ── Toast Notification ──────────────────────────────────────── */
+/* ---------- TOAST & LOADING ---------- */
 #toast {
   position: fixed;
-  bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: rgba(17,24,39,0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 22px;
+  background: #0f172ad9;
+  backdrop-filter: blur(12px);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 60px;
   font-size: 14px;
-  font-weight: 500;
   z-index: 9999;
   opacity: 0;
+  transition: 0.2s;
   pointer-events: none;
   white-space: nowrap;
-  max-width: 85vw;
-  text-align: center;
-  transition: opacity 0.28s, transform 0.28s;
 }
 #toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+#loadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 5000;
+}
+#loadingOverlay.visible { display: flex; }
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #bfdbfe;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Swipe Flash Arrows ──────────────────────────────────────── */
+/* ---------- SWIPE FLASH ARROWS ---------- */
 .swipe-arrow {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(37,99,235,0.75);
+  background: rgba(37,99,235,0.85);
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
-  padding: 14px 10px;
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  padding: 16px 10px;
   z-index: 800;
   opacity: 0;
+  transition: opacity 0.2s;
   pointer-events: none;
-  transition: opacity 0.15s;
+  border-radius: 12px;
 }
-#arrowLeft  { left: 0;  border-radius: 0 10px 10px 0; }
-#arrowRight { right: 0; border-radius: 10px 0 0 10px; }
+#arrowLeft { left: 0; border-radius: 0 16px 16px 0; }
+#arrowRight { right: 0; border-radius: 16px 0 0 16px; }
 
-/* ── Loading Overlay ─────────────────────────────────────────── */
-#loadingOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  z-index: 5000;
-  color: #2563eb;
-  font-size: 15px;
-  font-weight: 600;
-}
-#loadingOverlay.visible { display: flex; }
-.spinner {
-  width: 42px;
-  height: 42px;
-  border: 4px solid #dbeafe;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: spin 0.75s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Install Button ──────────────────────────────────────────── */
+/* ---------- INSTALL BUTTON ---------- */
 #installBtn {
-  display: none;
   position: fixed;
-  bottom: 20px;
+  bottom: 24px;
   right: 20px;
-  z-index: 9999;
   background: #2563eb;
-  color: #fff;
+  color: white;
   border: none;
-  border-radius: 50px;
-  padding: 12px 20px;
+  border-radius: 60px;
+  padding: 12px 22px;
   font-weight: 600;
-  font-size: 14px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-  touch-action: manipulation;
-  min-height: 44px;
+  z-index: 9999;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  display: none;
+  min-height: 48px;
 }
 
-/* ── Dark Theme ──────────────────────────────────────────────── */
-body.dark {
-  background: #0f1117;
-  color: #e5e7eb;
+/* ---------- DARK & SEPIA THEMES ---------- */
+body.dark header, body.dark .panel, body.dark #searchResults, body.dark #dictPopup {
+  background: #0f172a;
+  color: #e2e8f0;
 }
-body.dark header          { background: #1a1d2e; box-shadow: 0 2px 12px rgba(0,0,0,0.4); }
-body.dark select          { background: #1a1d2e; color: #e5e7eb; border-color: #374151; }
-body.dark #searchInput    { background: #1a1d2e; color: #e5e7eb; border-color: #374151; }
-body.dark #pageInfo       { background: #1a1d2e; color: #9ca3af; }
-body.dark .panel          { background: #1a1d2e; color: #e5e7eb; }
-body.dark .panelContent   { color: #e5e7eb; }
-body.dark .toc-label      { color: #d1d5db; }
-body.dark .toc-row:active { background: #2a2d3e; }
-body.dark .toc-children   { border-color: #374151; }
-body.dark #searchResults  { background: #1a1d2e; color: #e5e7eb; }
-body.dark .result-item    { background: #1f2233; border-color: #2d3148; }
-body.dark .result-item:active { background: #2a2d3e; }
-body.dark .result-excerpt { color: #9ca3af; }
-body.dark .bm-row         { border-color: #2d3148; }
-body.dark .bm-label       { color: #d1d5db; }
-body.dark #dictPopup      { background: #1a1d2e; }
-body.dark .dict-word      { color: #f3f4f6; }
-body.dark .dict-def       { color: #d1d5db; }
-body.dark .dict-handle    { background: #374151; }
-body.dark #progressBarContainer { background: #1f2233; }
-body.dark #loadingOverlay { background: rgba(15,17,23,0.88); color: #60a5fa; }
+body.dark .result-item { background: #1e293b; border-color: #334155; }
+body.dark .toc-row:active, body.dark .bm-row:active { background: #1e293b; }
 
-/* ── Sepia Theme ─────────────────────────────────────────────── */
-body.sepia {
-  background: #f5edd6;
-  color: #4a3728;
+body.sepia header, body.sepia .panel, body.sepia #searchResults, body.sepia #dictPopup {
+  background: #fef7e0;
+  color: #5e3a1c;
 }
-body.sepia header       { background: #ede0c4; }
-body.sepia select,
-body.sepia #searchInput { background: #ede0c4; color: #4a3728; border-color: #c8b898; }
-body.sepia .panel,
-body.sepia #searchResults,
-body.sepia #dictPopup   { background: #fdf6e3; }
-body.sepia .toc-label,
-body.sepia .bm-label,
-body.sepia .dict-word   { color: #4a3728; }
-body.sepia #pageInfo    { background: #e8d9b8; color: #6b5344; }
+body.sepia .result-item { background: #fff4e4; border-color: #e2c8a0; }
+body.sepia .toc-row:active { background: #f3e5c9; }
 
-/* ── Mobile Responsive ───────────────────────────────────────── */
-@media (max-width: 480px) {
-  header      { gap: 4px; padding: 6px 8px; padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
-  button, label.btn { font-size: 12px; padding: 6px 9px; min-height: 40px; min-width: 40px; }
-  #searchInput { width: 100px; }
-  #pageInfo { font-size: 10px; padding: 2px 5px; }
+/* responsive */
+@media (max-width: 560px) {
+  header { gap: 4px; padding: 6px 8px; }
+  button, label.btn { padding: 5px 8px; font-size: 12px; min-height: 40px; }
+  #searchInput { width: 110px; font-size: 13px; }
 }
 </style>
 </head>
 <body>
 
 <div id="app">
-  <!-- Header (collapsible) -->
   <div id="headerWrap">
     <header>
       <label class="btn" for="fileInput">📚 Open</label>
       <input type="file" id="fileInput" accept=".epub">
-
-      <button id="prev" title="Previous page">◀</button>
-      <button id="next" title="Next page">▶</button>
-
+      <button id="prev">◀ Prev</button>
+      <button id="next">Next ▶</button>
       <button id="tocBtn">📑 TOC</button>
       <button id="bookmarkPanelBtn">🔖 List</button>
       <button id="addBookmarkBtn">🔖+</button>
       <button id="dictionaryBtn">📖 Define</button>
-
       <button id="fontMinus">A−</button>
       <button id="fontPlus">A+</button>
-
       <select id="themeSelect">
         <option value="light">☀️ Light</option>
         <option value="dark">🌙 Dark</option>
         <option value="sepia">📜 Sepia</option>
       </select>
-
-      <input type="text" id="searchInput" placeholder="🔍 Search…"
-             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <input type="text" id="searchInput" placeholder="🔍 Search..." autocomplete="off">
       <button id="searchBtn">Go</button>
-
       <span id="pageInfo">📄 —</span>
     </header>
   </div>
-
   <div id="progressBarContainer"><div id="progressBar"></div></div>
   <div id="viewer"></div>
 </div>
 
-<!-- Tap-to-show-header pill -->
 <div id="headerPill">↓ Tap to show menu</div>
-
-<!-- Panel backdrop -->
 <div id="panelOverlay"></div>
 
 <!-- TOC Panel -->
 <div id="tocPanel" class="panel">
-  <div class="panelHeader">
-    <span>📑 Table of Contents</span>
-    <button onclick="closeAllPanels()">✕</button>
-  </div>
+  <div class="panelHeader"><span>📑 Table of Contents</span><button onclick="closeAllPanels()">✕</button></div>
   <div id="tocContent" class="panelContent"></div>
 </div>
 
 <!-- Bookmarks Panel -->
 <div id="bookmarkPanel" class="panel">
-  <div class="panelHeader">
-    <span>🔖 Bookmarks</span>
-    <button onclick="closeAllPanels()">✕</button>
-  </div>
+  <div class="panelHeader"><span>🔖 Bookmarks</span><button onclick="closeAllPanels()">✕</button></div>
   <div id="bookmarkContent" class="panelContent"></div>
 </div>
 
-<!-- Search Results -->
+<!-- Search modal with backdrop -->
+<div id="searchBackdrop"></div>
 <div id="searchResults">
-  <div class="searchHeader">
-    <span id="searchCount">🔍 Results</span>
-    <button onclick="hideSearch()">✕</button>
-  </div>
+  <div class="searchHeader"><span id="searchCount">🔍 Search results</span><button id="closeSearchBtn">✕</button></div>
   <div id="searchList"></div>
 </div>
 
@@ -712,758 +502,383 @@ body.sepia #pageInfo    { background: #e8d9b8; color: #6b5344; }
 <div id="dictPopup">
   <div class="dict-handle"></div>
   <div id="dictContent"></div>
-  <button onclick="closeDictPopup()" style="margin-top:16px;width:100%;">Close</button>
+  <button id="closeDictBtn" style="margin:16px auto 8px; background:#2563eb; border:none; color:white; padding:12px; border-radius:40px; width:100%;">Close</button>
 </div>
 
-<!-- Swipe flash arrows -->
-<div id="arrowLeft"  class="swipe-arrow">‹</div>
-<div id="arrowRight" class="swipe-arrow">›</div>
-
-<!-- Toast -->
 <div id="toast"></div>
+<div id="loadingOverlay"><div class="spinner"></div><div>Loading book...</div></div>
+<button id="installBtn">📲 Install App</button>
 
-<!-- Loading overlay -->
-<div id="loadingOverlay">
-  <div class="spinner"></div>
-  <span id="loadingMsg">Loading…</span>
-</div>
-
-<!-- Install button -->
-<button id="installBtn">⬇️ Install App</button>
+<!-- flash arrows -->
+<div id="arrowLeft" class="swipe-arrow">‹</div>
+<div id="arrowRight" class="swipe-arrow">›</div>
 
 <script>
 'use strict';
 
-// ── State ────────────────────────────────────────────────────────
-let book, rendition;
-let currentFont    = 100;
-let selectedText   = "";
-let currentBookKey = "";
-let headerVisible  = true;
-let deferredPrompt = null;
-
-// Persist theme
-let currentTheme = localStorage.getItem("epub-theme") || "light";
-
-// ── DOM refs ─────────────────────────────────────────────────────
+// ---------- DOM elements ----------
 const $ = id => document.getElementById(id);
-const headerWrap     = $("headerWrap");
-const headerPill     = $("headerPill");
-const progressBar    = $("progressBar");
-const pageInfo       = $("pageInfo");
-const panelOverlay   = $("panelOverlay");
-const toast          = $("toast");
-const loadingOverlay = $("loadingOverlay");
-const arrowLeft      = $("arrowLeft");
-const arrowRight     = $("arrowRight");
-const installBtn     = $("installBtn");
+const headerWrap = $('headerWrap'), headerPill = $('headerPill');
+const progressBar = $('progressBar'), pageInfo = $('pageInfo');
+const panelOverlay = $('panelOverlay'), toast = $('toast'), loadingOverlay = $('loadingOverlay');
+let book, rendition;
+let currentFont = 100;
+let currentTheme = localStorage.getItem('epub-theme') || 'light';
+let currentBookKey = '';
+let headerVisible = true;
+let selectedWord = '';
 
-// ── Toast ────────────────────────────────────────────────────────
-let _toastTimer;
 function showToast(msg) {
   toast.textContent = msg;
-  toast.classList.add("show");
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2600);
 }
-
-// ── Loading ──────────────────────────────────────────────────────
 function showLoading(msg) {
-  $("loadingMsg").textContent = msg || "Loading…";
-  loadingOverlay.classList.add("visible");
+  loadingOverlay.querySelector('div:last-child').innerText = msg || 'Loading...';
+  loadingOverlay.classList.add('visible');
 }
 function hideLoading() {
-  loadingOverlay.classList.remove("visible");
+  loadingOverlay.classList.remove('visible');
 }
 
-// ── Header toggle ────────────────────────────────────────────────
-function showHeader() {
-  headerVisible = true;
-  headerWrap.classList.remove("hidden");
-  headerPill.style.opacity = "0";
-}
-function toggleHeader() {
-  headerVisible = !headerVisible;
-  headerWrap.classList.toggle("hidden", !headerVisible);
-  headerPill.style.opacity = headerVisible ? "0" : "1";
-}
+// ---------- Header toggle (fixed) ----------
+function showHeader() { headerVisible = true; headerWrap.classList.remove('hidden'); }
+function hideHeader() { headerVisible = false; headerWrap.classList.add('hidden'); }
+function toggleHeader() { headerVisible ? hideHeader() : showHeader(); }
+headerPill.onclick = () => showHeader();
 
-// Tap on headerPill reveals the menu
-headerPill.addEventListener("click", (e) => {
-  e.stopPropagation();
-  showHeader();
-});
-
-// ── Panels ───────────────────────────────────────────────────────
+// ---------- Panels ----------
 function openPanel(id) {
   closeAllPanels();
-  $(id).classList.add("open");
-  panelOverlay.classList.add("visible");
+  $(id).classList.add('open');
+  panelOverlay.classList.add('visible');
   showHeader();
 }
 function closeAllPanels() {
-  document.querySelectorAll(".panel").forEach(p => p.classList.remove("open"));
-  panelOverlay.classList.remove("visible");
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+  panelOverlay.classList.remove('visible');
 }
-panelOverlay.addEventListener("click", closeAllPanels);
+panelOverlay.onclick = closeAllPanels;
 
-// ── Theme ────────────────────────────────────────────────────────
-function applyBodyTheme(theme) {
-  document.body.classList.remove("dark", "sepia");
-  if (theme === "dark")  document.body.classList.add("dark");
-  if (theme === "sepia") document.body.classList.add("sepia");
-  $("themeSelect").value = theme;
-}
-
-function registerRenditionThemes() {
-  if (!rendition?.themes) return;
-  rendition.themes.register("light", {
-    "html, body": { background: "#ffffff !important", color: "#111827 !important" }
-  });
-  rendition.themes.register("dark", {
-    "html, body": { background: "#111827 !important", color: "#e5e7eb !important" },
-    "a": { color: "#93c5fd !important" }
-  });
-  rendition.themes.register("sepia", {
-    "html, body": { background: "#fdf6e3 !important", color: "#4a3728 !important" }
-  });
-}
-
+// ---------- Theme ----------
 function setTheme(theme) {
   currentTheme = theme;
-  localStorage.setItem("epub-theme", theme);
-  applyBodyTheme(theme);
+  localStorage.setItem('epub-theme', theme);
+  document.body.classList.remove('dark', 'sepia');
+  if (theme === 'dark') document.body.classList.add('dark');
+  if (theme === 'sepia') document.body.classList.add('sepia');
+  $('themeSelect').value = theme;
   if (rendition) rendition.themes.select(theme);
 }
+$('themeSelect').onchange = e => setTheme(e.target.value);
+setTheme(currentTheme);
 
-$("themeSelect").onchange = e => setTheme(e.target.value);
-applyBodyTheme(currentTheme);
-
-// ── Load EPUB ────────────────────────────────────────────────────
-$("fileInput").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  showLoading("Opening book…");
-  showHeader();
-
-  if (rendition) {
-    try { rendition.destroy(); } catch (_) {}
-  }
-
-  book      = ePub(file);
-  rendition = book.renderTo("viewer", {
-    width: "100%",
-    height: "100%",
-    allowScriptedContent: false,
-    snap: true
-  });
-
-  registerRenditionThemes();
-  setTheme(currentTheme);
-  rendition.themes.fontSize(currentFont + "%");
-
-  // Apply theme + font + gestures on every page render
-  rendition.hooks.content.register((contents) => {
-    if (rendition?.themes) {
-      rendition.themes.select(currentTheme);
-      rendition.themes.fontSize(currentFont + "%");
-    }
-    injectGestures(contents);
-  });
-
-  // Word/phrase selection
-  rendition.on("selected", (cfiRange, contents) => {
-    selectedText = contents?.window?.getSelection?.()?.toString?.()?.trim() || "";
-  });
-
-  try {
-    await rendition.display();
-  } catch (err) {
-    console.warn("Display error:", err);
-  }
-
-  buildTOC();
-  setupLocations();
-
-  book.ready
-    .then(() => {
-      const id = (book.package?.metadata?.identifier) || file.name;
-      currentBookKey = "epub-bm-" + id;
-      updateBookmarkPanel();
-    })
-    .catch(console.warn)
-    .finally(hideLoading);
-});
-
-// ── Gestures — injected inside every iframe page ──────────────
+// ---------- SWIPE GESTURES (inside iframe) ----------
 function injectGestures(contents) {
   const doc = contents?.document;
-  if (!doc) return;
-
-  let tx = 0, ty = 0, ts = 0, isScrolling = false;
-
-  doc.addEventListener("touchstart", (e) => {
-    if (e.touches.length !== 1) return;
-    tx = e.touches[0].clientX;
-    ty = e.touches[0].clientY;
-    ts = Date.now();
-    isScrolling = false;
-  }, { passive: true });
-
-  doc.addEventListener("touchmove", (e) => {
-    const dy = Math.abs(e.touches[0].clientY - ty);
-    if (dy > 8) isScrolling = true;
-  }, { passive: true });
-
-  doc.addEventListener("touchend", (e) => {
-    if (e.touches?.length > 0) return;
-    
-    const dx = e.changedTouches[0].clientX - tx;
-    const dy = e.changedTouches[0].clientY - ty;
-    const dt = Date.now() - ts;
-    const adx = Math.abs(dx);
-    const ady = Math.abs(dy);
-
-    // Swipe for page turn
-    if (dt < 500 && adx > 35 && adx > ady * 1.5 && !isScrolling) {
-      e.preventDefault();
-      if (dx < 0) {
-        flashArrow("right");
-        rendition?.next?.()?.catch?.(() => {});
-      } else {
-        flashArrow("left");
-        rendition?.prev?.()?.catch?.(() => {});
-      }
-      return;
-    }
-
-    // Short tap: toggle header
-    if (dt < 250 && adx < 15 && ady < 15 && !isScrolling) {
-      const tag = (e.target.tagName || "").toUpperCase();
-      if (["A", "BUTTON", "INPUT", "SELECT", "TEXTAREA"].includes(tag)) return;
-      e.preventDefault();
-      toggleHeader();
-    }
-  }, { passive: false });
-
-  // Prevent context menu on long-press (improves text selection UX)
-  doc.addEventListener("contextmenu", (e) => {
-    if (selectedText) e.preventDefault();
-  });
-
-  // Keyboard nav
-  doc.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight" || e.key === "ArrowDown")  rendition?.next?.();
-    if (e.key === "ArrowLeft"  || e.key === "ArrowUp")    rendition?.prev?.();
-  });
-}
-
-// Outer viewer element touch (fallback for edge zones)
-(function setupViewerTouch() {
-  const viewer = $("viewer");
-  if (!viewer) return;
-  
+  if (!doc || doc.__swipeFixed) return;
+  doc.__swipeFixed = true;
   let startX = 0, startY = 0, startTime = 0, isScrolling = false;
-  
-  viewer.addEventListener("touchstart", (e) => {
+  doc.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     startTime = Date.now();
     isScrolling = false;
   }, { passive: true });
-  
-  viewer.addEventListener("touchmove", (e) => {
-    const dy = Math.abs(e.touches[0].clientY - startY);
-    if (dy > 10) isScrolling = true;
+  doc.addEventListener('touchmove', (e) => {
+    if (Math.abs(e.touches[0].clientY - startY) > 12) isScrolling = true;
   }, { passive: true });
-  
-  viewer.addEventListener("touchend", (e) => {
-    if (e.touches?.length > 0 || isScrolling) return;
-    
-    const dx = Math.abs(e.changedTouches[0].clientX - startX);
-    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+  doc.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length === 0) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
     const dt = Date.now() - startTime;
-    
-    // Short tap → toggle header
-    if (dt < 300 && dx < 20 && dy < 20) {
+    const absDx = Math.abs(dx), absDy = Math.abs(dy);
+    // horizontal swipe -> page turn
+    if (dt < 400 && absDx > 40 && absDx > absDy * 1.8 && !isScrolling) {
       e.preventDefault();
-      toggleHeader();
+      if (dx < 0) { flashArrow('right'); rendition?.next()?.catch(()=>{}); }
+      else { flashArrow('left'); rendition?.prev()?.catch(()=>{}); }
       return;
     }
-    
-    // Swipe for page turn
-    const swipeDx = e.changedTouches[0].clientX - startX;
-    const adx = Math.abs(swipeDx);
-    if (dt < 500 && adx > 35 && adx > dy * 1.5) {
-      e.preventDefault();
-      if (swipeDx < 0) {
-        flashArrow("right");
-        rendition?.next?.()?.catch?.(() => {});
-      } else {
-        flashArrow("left");
-        rendition?.prev?.()?.catch?.(() => {});
-      }
-    }
-  }, { passive: false });
-
-  // Prevent iOS rubber-band scroll on horizontal swipes
-  viewer.addEventListener("touchmove", (e) => {
-    if (e.touches.length === 1) {
-      const dx = Math.abs(e.touches[0].clientX - (window._viewerTouchX || 0));
-      const dy = Math.abs(e.touches[0].clientY - (window._viewerTouchY || 0));
-      if (dx > dy && dx > 10) {
+    // tap -> toggle header (avoid UI elements)
+    if (dt < 280 && absDx < 12 && absDy < 12 && !isScrolling) {
+      const tag = (e.target.tagName || '').toUpperCase();
+      if (!['A','BUTTON','INPUT','SELECT','TEXTAREA'].includes(tag)) {
         e.preventDefault();
+        toggleHeader();
       }
     }
   }, { passive: false });
-
-  viewer.addEventListener("touchstart", (e) => {
-    if (e.touches.length === 1) {
-      window._viewerTouchX = e.touches[0].clientX;
-      window._viewerTouchY = e.touches[0].clientY;
-    }
-  }, { passive: true });
-})();
-
-// Handle iOS viewport resize on address bar toggle
-if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-  window.addEventListener("resize", () => {
-    if (rendition) {
-      clearTimeout(window._resizeTimer);
-      window._resizeTimer = setTimeout(() => {
-        rendition?.resize?.();
-      }, 150);
-    }
-  });
+  doc.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
-// ── Arrow flash ──────────────────────────────────────────────────
 function flashArrow(side) {
-  const el = side === "left" ? arrowLeft : arrowRight;
-  if (!el) return;
-  el.style.opacity = "1";
-  clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.opacity = "0"; }, 320);
+  const el = $(side === 'left' ? 'arrowLeft' : 'arrowRight');
+  if (el) { el.style.opacity = '1'; clearTimeout(el._t); el._t = setTimeout(() => el.style.opacity = '0', 300); }
 }
 
-// ── Prev / Next buttons ──────────────────────────────────────────
-$("prev").onclick = () => rendition?.prev?.();
-$("next").onclick = () => rendition?.next?.();
-
-// ── Font size ────────────────────────────────────────────────────
-$("fontPlus").onclick = () => {
-  if (!rendition) return;
-  currentFont = Math.min(currentFont + 10, 220);
-  rendition.themes.fontSize(currentFont + "%");
-  showToast(`Font ${currentFont}%`);
-};
-$("fontMinus").onclick = () => {
-  if (!rendition) return;
-  currentFont = Math.max(currentFont - 10, 70);
-  rendition.themes.fontSize(currentFont + "%");
-  showToast(`Font ${currentFont}%`);
-};
-
-// ── Progress & locations ─────────────────────────────────────────
-function setupLocations() {
-  showLoading("Building location index…");
-  book.ready
-    .then(() => book.locations?.generate?.(1600))
-    .then(() => {
-      hideLoading();
-      const total = book.locations?.total;
-      rendition.on("relocated", loc => {
-        try {
-          const cur = book.locations?.locationFromCfi?.(loc.start.cfi);
-          if (cur != null && total) {
-            pageInfo.textContent   = `📄 ${cur} / ${total}`;
-            progressBar.style.width = ((cur / total) * 100) + "%";
-          }
-        } catch (_) {}
-      });
-    })
-    .catch(() => hideLoading());
-}
-
-// ── TOC ──────────────────────────────────────────────────────────
-$("tocBtn").onclick = () => openPanel("tocPanel");
-
-function buildTOC() {
-  if (!book?.loaded?.navigation) return;
-  book.loaded.navigation.then(nav => {
-    const container = $("tocContent");
-    if (!container) return;
-    container.innerHTML = "";
-    if (!nav.toc || nav.toc.length === 0) {
-      container.innerHTML = "<p style='color:#9ca3af;padding:14px'>No table of contents in this book.</p>";
-      return;
-    }
-    renderTOCItems(nav.toc, container, 0);
+// ---------- Load EPUB ----------
+$('fileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  showLoading('Opening book...');
+  if (rendition) try { rendition.destroy(); } catch(_) {}
+  book = ePub(file);
+  rendition = book.renderTo('viewer', {
+    width: '100%',
+    height: '100%',
+    allowScriptedContent: false,
+    snap: true
   });
-}
-
-// Recursive TOC renderer — handles unlimited nesting depth
-function renderTOCItems(items, container, depth) {
-  if (!items?.length || !container) return;
+  rendition.themes.register('light', { body: { background: '#ffffff', color: '#1e293b' } });
+  rendition.themes.register('dark', { body: { background: '#0f172a', color: '#e2e8f0' } });
+  rendition.themes.register('sepia', { body: { background: '#fef7e0', color: '#5e3a1c' } });
+  rendition.themes.select(currentTheme);
+  rendition.themes.fontSize(currentFont + '%');
+  rendition.hooks.content.register((contents) => injectGestures(contents));
   
-  items.forEach(item => {
-    const label = (item.label || "").trim();
-    const hasKids = Array.isArray(item.subitems) && item.subitems.length > 0;
-    const indent = 8 + depth * 18;
+  // capture selected text for dictionary
+  rendition.on('selected', (cfi, contents) => {
+    const sel = contents?.window?.getSelection?.()?.toString?.()?.trim();
+    if (sel) selectedWord = sel.split(/\s+/)[0];
+  });
+  
+  try { await rendition.display(); } catch(err) { console.warn(err); }
+  buildTOC();
+  setupProgress();
+  const meta = await book.loaded.metadata;
+  currentBookKey = 'epub-bm-' + (meta?.identifier || file.name);
+  updateBookmarkPanel();
+  hideLoading();
+});
 
-    const row = document.createElement("div");
-    row.className = "toc-row";
-    row.style.paddingLeft = indent + "px";
-    row.dataset.hasChildren = hasKids;
-
-    if (hasKids) {
-      // Expand toggle button
-      const btn = document.createElement("button");
-      btn.className = "toc-expand-btn";
-      btn.textContent = "▶";
-      btn.title = "Expand section";
-      btn.type = "button";
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        const childWrap = row.nextElementSibling;
-        if (childWrap?.classList.contains("toc-children")) {
-          const isOpen = childWrap.classList.toggle("open");
-          btn.textContent = isOpen ? "▼" : "▶";
-          btn.setAttribute("aria-expanded", String(isOpen));
-        }
-      };
-
-      const lbl = document.createElement("span");
-      lbl.className = "toc-label";
-      lbl.textContent = label;
-      lbl.title = label;
-      lbl.onclick = (e) => {
-        e.stopPropagation();
-        if (item.href && rendition) {
-          rendition.display(item.href).catch(console.warn);
-          closeAllPanels();
-        }
-      };
-
-      row.appendChild(btn);
-      row.appendChild(lbl);
-      container.appendChild(row);
-
-      // Children container
-      const childWrap = document.createElement("div");
-      childWrap.className = "toc-children";
-      renderTOCItems(item.subitems, childWrap, depth + 1);
-      container.appendChild(childWrap);
-
-    } else {
-      // Leaf node - full row clickable
-      const lbl = document.createElement("span");
-      lbl.className = "toc-label";
-      lbl.textContent = (depth > 0 ? "└ " : "") + label;
-      lbl.title = label;
-      row.appendChild(lbl);
-      container.appendChild(row);
-      
-      row.onclick = (e) => {
-        e.stopPropagation();
-        if (item.href && rendition) {
-          rendition.display(item.href).catch(console.warn);
-          closeAllPanels();
-        }
-      };
+function setupProgress() {
+  book.ready.then(() => book.locations?.generate?.(1800)).catch(()=>{});
+  rendition.on('relocated', async (loc) => {
+    if (!book?.locations) return;
+    const cur = book.locations.locationFromCfi(loc.start.cfi);
+    const total = book.locations.total;
+    if (cur && total) {
+      pageInfo.innerText = `📄 ${cur}/${total}`;
+      progressBar.style.width = (cur / total) * 100 + '%';
     }
   });
 }
 
-// ── Search ───────────────────────────────────────────────────────
-function hideSearch() {
-  const sr = $("searchResults");
-  if (sr) sr.classList.remove("visible");
+// ---------- TOC (full nesting with expand/collapse) ----------
+function buildTOC() {
+  if (!book?.navigation) return;
+  book.loaded.navigation.then(nav => {
+    const container = $('tocContent');
+    container.innerHTML = '';
+    if (!nav.toc?.length) { container.innerHTML = '<p>No TOC available.</p>'; return; }
+    function render(items, parent, depth) {
+      items.forEach(item => {
+        const row = document.createElement('div'); row.className = 'toc-row';
+        row.style.paddingLeft = (8 + depth * 18) + 'px';
+        const labelSpan = document.createElement('span'); labelSpan.className = 'toc-label'; labelSpan.innerText = item.label || 'untitled';
+        const hasKids = item.subitems?.length;
+        if (hasKids) {
+          const btn = document.createElement('button'); btn.textContent = '▶'; btn.className = 'toc-expand-btn';
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const childDiv = row.nextElementSibling;
+            if (childDiv?.classList) {
+              childDiv.classList.toggle('open');
+              btn.textContent = childDiv.classList.contains('open') ? '▼' : '▶';
+            }
+          };
+          row.appendChild(btn); row.appendChild(labelSpan); parent.appendChild(row);
+          const childDiv = document.createElement('div'); childDiv.className = 'toc-children';
+          render(item.subitems, childDiv, depth+1);
+          parent.appendChild(childDiv);
+        } else {
+          row.appendChild(labelSpan); parent.appendChild(row);
+          row.onclick = () => { if (item.href) rendition.display(item.href); closeAllPanels(); };
+        }
+      });
+    }
+    render(nav.toc, container, 0);
+  });
 }
 
-$("searchBtn").onclick = doSearch;
-$("searchInput")?.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+// ---------- SEARCH (fixed: modal, scroll does NOT close) ----------
+function hideSearch() {
+  $('searchResults').classList.remove('visible');
+  $('searchBackdrop').classList.remove('visible');
+}
+$('closeSearchBtn').onclick = hideSearch;
+$('searchBackdrop').onclick = hideSearch;
+$('searchBtn').onclick = doSearch;
+$('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 
 async function doSearch() {
-  const query = $("searchInput")?.value?.trim();
-  if (!query) { showToast("Enter a search term"); return; }
-  if (!book)  { showToast("Open a book first");   return; }
-
-  $("searchInput")?.blur();
-
-  const resultsDiv = $("searchResults");
-  const searchList = $("searchList");
-  const searchCount = $("searchCount");
-
-  if (!searchList || !searchCount) return;
-
-  searchList.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;padding:30px;color:#9ca3af">
-      <div class="spinner" style="margin-bottom:12px"></div>
-      Searching for "<strong>${query}</strong>"…
-    </div>`;
-  if (resultsDiv) resultsDiv.classList.add("visible");
-  searchCount.textContent = "🔍 Searching…";
-
-  try {
-    const results = await searchAllSpine(query);
-    renderSearchResults(results, query);
-  } catch (err) {
-    searchList.innerHTML = `<p style="padding:20px;color:#ef4444">Search error: ${err?.message || err}</p>`;
-    searchCount.textContent = "🔍 Error";
-  }
-}
-
-async function searchAllSpine(query) {
-  const all = [];
-  const spineItems = book?.spine?.spineItems || [];
-
+  const query = $('searchInput').value.trim();
+  if (!query) { showToast('Enter a word to search'); return; }
+  if (!book) { showToast('Open a book first'); return; }
+  $('searchInput').blur();
+  const resultsDiv = $('searchResults'), searchList = $('searchList'), countSpan = $('searchCount');
+  searchList.innerHTML = '<div style="text-align:center;padding:30px;"><div class="spinner"></div><br>Searching...</div>';
+  resultsDiv.classList.add('visible');
+  $('searchBackdrop').classList.add('visible');
+  countSpan.innerText = '🔍 Searching...';
+  const spineItems = book.spine?.spineItems || [];
+  let allResults = [];
   for (const item of spineItems) {
     try {
       await item.load(book.load.bind(book));
-      const found = (typeof item.find === "function") ? item.find(query) : [];
-      found.forEach(r => all.push({ cfi: r.cfi, excerpt: r.excerpt || "" }));
-    } catch (_) {} finally {
-      try { item.unload(); } catch (_) {}
-    }
+      if (typeof item.find === 'function') {
+        const found = await item.find(query);
+        if (found?.length) allResults.push(...found.map(r => ({ cfi: r.cfi, excerpt: r.excerpt || '' })));
+      }
+    } catch(e) {}
+    finally { try { item.unload(); } catch(_) {} }
   }
-  return all;
-}
-
-function renderSearchResults(results, query) {
-  const searchList  = $("searchList");
-  const searchCount = $("searchCount");
-  if (!searchList || !searchCount) return;
-  
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(escaped, "gi");
-
-  searchCount.textContent = results.length
-    ? `🔍 ${results.length} result${results.length !== 1 ? "s" : ""}`
-    : "🔍 No results";
-
-  searchList.innerHTML = "";
-
-  if (results.length === 0) {
-    searchList.innerHTML = `
-      <div style="text-align:center;padding:30px;color:#9ca3af">
-        😕 No results for "<strong>${query}</strong>"
-      </div>`;
+  if (allResults.length === 0) {
+    searchList.innerHTML = '<div style="padding:30px;text-align:center;">😕 No matches found.</div>';
+    countSpan.innerText = '🔍 0 results';
     return;
   }
-
-  results.forEach((r, i) => {
-    const div = document.createElement("div");
-    div.className = "result-item";
-    div.setAttribute("role", "button");
-    div.setAttribute("tabindex", "0");
-
-    const highlighted = r.excerpt.replace(re, m => `<mark>${m}</mark>`);
-    div.innerHTML = `
-      <div class="result-num">Result ${i + 1}</div>
-      <div class="result-excerpt">…${highlighted}…</div>`;
-
-    const navigate = async () => {
-      if (!rendition) return;
-      try {
-        await rendition.display(r.cfi);
+  countSpan.innerText = `🔍 ${allResults.length} result${allResults.length !== 1 ? 's' : ''}`;
+  searchList.innerHTML = '';
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  allResults.forEach((res, idx) => {
+    const div = document.createElement('div'); div.className = 'result-item';
+    const excerpt = res.excerpt.length > 300 ? res.excerpt.slice(0,300)+'…' : res.excerpt;
+    const highlighted = excerpt.replace(regex, '<mark>$1</mark>');
+    div.innerHTML = `<div class="result-excerpt">…${highlighted}…</div>`;
+    div.onclick = async () => {
+      if (rendition) {
+        await rendition.display(res.cfi);
         hideSearch();
-        showToast("📍 Jumped to result");
-      } catch (err) {
-        console.warn("Nav error:", err);
-        showToast("⚠️ Could not navigate");
+        showToast('📍 Jumped to result');
       }
     };
-
-    div.addEventListener("click", (e) => { e.preventDefault(); navigate(); });
-    div.addEventListener("touchend", (e) => { 
-      e.preventDefault(); 
-      e.stopPropagation(); 
-      navigate(); 
-    }, { passive: false });
-    div.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        navigate();
-      }
-    });
-
     searchList.appendChild(div);
   });
 }
 
-// ── Dictionary ───────────────────────────────────────────────────
-$("dictionaryBtn").onclick = async () => {
-  if (!selectedText) {
-    showToast("👆 Select a word in the book first");
-    return;
-  }
-
-  const word = selectedText.split(/\s+/)[0];
-  const dictPopup = $("dictPopup");
-  const dictContent = $("dictContent");
-  
-  if (!dictPopup || !dictContent) return;
-
-  dictContent.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;padding:20px;color:#9ca3af">
-      <div class="spinner" style="margin-bottom:10px"></div>
-      Looking up "<strong>${word}</strong>"…
-    </div>`;
-  dictPopup.classList.add("open");
-
+// ---------- DICTIONARY (fixed) ----------
+$('dictionaryBtn').onclick = async () => {
+  if (!selectedWord) { showToast('Select a word first (long press / double tap)'); return; }
+  const popup = $('dictPopup'), content = $('dictContent');
+  content.innerHTML = '<div class="spinner" style="margin:20px auto;"></div><div>Looking up...</div>';
+  popup.classList.add('open');
   try {
-    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(selectedWord)}`);
     const data = await res.json();
-
-    if (data.title) {
-      dictContent.innerHTML = `
-        <div class="dict-word">📖 ${word}</div>
-        <p style="color:#9ca3af">No definition found for this word.</p>`;
-      return;
-    }
-
+    if (!res.ok || data.title) throw new Error();
     const entry = data[0];
-    const phonetic = entry.phonetic || entry.phonetics?.find(p => p.text)?.text || "";
-
     let html = `<div class="dict-word">📖 ${entry.word}</div>`;
-    if (phonetic) html += `<div class="dict-phonetic">${phonetic}</div>`;
-
-    (entry.meanings || []).slice(0, 3).forEach(m => {
-      html += `<div class="dict-pos">${m.partOfSpeech}</div>`;
-      (m.definitions || []).slice(0, 2).forEach((d, i) => {
-        html += `<div class="dict-def">${i + 1}. ${d.definition}</div>`;
-        if (d.example) {
-          html += `<div class="dict-example">"${d.example}"</div>`;
-        }
+    if (entry.phonetic) html += `<div style="color:#2563eb;">/${entry.phonetic}/</div>`;
+    entry.meanings?.slice(0,3).forEach(m => {
+      html += `<div style="margin-top:12px;"><strong>${m.partOfSpeech}</strong></div>`;
+      m.definitions.slice(0,2).forEach(d => {
+        html += `<div class="dict-def">• ${d.definition}</div>`;
+        if (d.example) html += `<div style="font-style:italic; color:#475569;">“${d.example}”</div>`;
       });
     });
-
-    dictContent.innerHTML = html;
-  } catch (_) {
-    dictContent.innerHTML = `<p style="color:#ef4444">⚠️ Network error. Check your connection.</p>`;
+    content.innerHTML = html;
+  } catch(e) {
+    content.innerHTML = `<p style="color:#b91c1c;">⚠️ No definition for “${selectedWord}”</p>`;
   }
 };
+$('closeDictBtn').onclick = () => $('dictPopup').classList.remove('open');
+// swipe-down to close dictionary
+const dictSheet = $('dictPopup'); let startYDict = 0;
+dictSheet.addEventListener('touchstart', e => { startYDict = e.touches[0].clientY; });
+dictSheet.addEventListener('touchend', e => { if (e.changedTouches[0].clientY - startYDict > 60) $('dictPopup').classList.remove('open'); });
 
-function closeDictPopup() {
-  $("dictPopup")?.classList.remove("open");
-}
-
-// Swipe down on dict sheet to close
-(function () {
-  const sheet = $("dictPopup");
-  if (!sheet) return;
-  let sy = 0;
-  sheet.addEventListener("touchstart", e => { sy = e.touches[0].clientY; }, { passive: true });
-  sheet.addEventListener("touchend", e => {
-    if (e.changedTouches[0].clientY - sy > 60) closeDictPopup();
-  }, { passive: true });
-})();
-
-// ── Bookmarks ────────────────────────────────────────────────────
-$("addBookmarkBtn").onclick = () => {
-  if (!rendition) { showToast("📚 Open a book first"); return; }
-  const loc = rendition.currentLocation?.();
-  if (!loc) { showToast("⚠️ Location not ready yet"); return; }
-
+// ---------- BOOKMARKS ----------
+$('addBookmarkBtn').onclick = () => {
+  if (!rendition || !currentBookKey) { showToast('Open a book first'); return; }
+  const loc = rendition.currentLocation(); if (!loc) return;
   const cfi = loc.start.cfi;
-  const data = JSON.parse(localStorage.getItem(currentBookKey) || "[]");
-
-  if (!data.includes(cfi)) {
-    data.push(cfi);
-    localStorage.setItem(currentBookKey, JSON.stringify(data));
+  let bm = JSON.parse(localStorage.getItem(currentBookKey) || '[]');
+  if (!bm.includes(cfi)) {
+    bm.push(cfi);
+    localStorage.setItem(currentBookKey, JSON.stringify(bm));
     updateBookmarkPanel();
-    showToast("✅ Bookmark saved");
-  } else {
-    showToast("📌 Already bookmarked here");
-  }
+    showToast('📌 Bookmark added');
+  } else showToast('Already bookmarked');
 };
-
-$("bookmarkPanelBtn").onclick = () => {
-  updateBookmarkPanel();
-  openPanel("bookmarkPanel");
-};
-
+$('bookmarkPanelBtn').onclick = () => { updateBookmarkPanel(); openPanel('bookmarkPanel'); };
 function updateBookmarkPanel() {
-  const content = $("bookmarkContent");
-  if (!content) return;
-  content.innerHTML = "";
-  const data = JSON.parse(localStorage.getItem(currentBookKey) || "[]");
-
-  if (data.length === 0) {
-    content.innerHTML = `
-      <p style="color:#9ca3af;padding:14px;line-height:1.6">
-        No bookmarks yet.<br>
-        Tap <strong>🔖+</strong> while reading to save your position.
-      </p>`;
+  const container = $('bookmarkContent'); if (!container) return;
+  let bm = JSON.parse(localStorage.getItem(currentBookKey) || '[]');
+  container.innerHTML = '';
+  if (!bm.length) {
+    container.innerHTML = '<p style="color:gray;">No bookmarks. Tap 🔖+ while reading.</p>';
     return;
   }
-
-  data.forEach((cfi, i) => {
-    const row = document.createElement("div");
-    row.className = "bm-row";
-    row.innerHTML = `
-      <span class="bm-label">🔖 Bookmark ${i + 1}</span>
-      <button class="bm-del" type="button">✕</button>`;
-
-    row.querySelector(".bm-label")?.addEventListener("click", () => {
-      if (rendition) {
-        rendition.display(cfi);
-        closeAllPanels();
-      }
-    });
-    row.querySelector(".bm-del")?.addEventListener("click", e => {
+  bm.forEach((cfi, idx) => {
+    const row = document.createElement('div'); row.className = 'bm-row';
+    row.innerHTML = `<span class="bm-label">🔖 Bookmark ${idx+1}</span><button class="bm-del">✕</button>`;
+    row.querySelector('.bm-label').onclick = () => { rendition.display(cfi); closeAllPanels(); };
+    row.querySelector('.bm-del').onclick = (e) => {
       e.stopPropagation();
-      deleteBookmark(cfi);
-    });
-    content.appendChild(row);
+      let arr = JSON.parse(localStorage.getItem(currentBookKey) || '[]');
+      arr = arr.filter(c => c !== cfi);
+      localStorage.setItem(currentBookKey, JSON.stringify(arr));
+      updateBookmarkPanel();
+      showToast('Removed');
+    };
+    container.appendChild(row);
   });
 }
 
-function deleteBookmark(cfi) {
-  let data = JSON.parse(localStorage.getItem(currentBookKey) || "[]");
-  data = data.filter(b => b !== cfi);
-  localStorage.setItem(currentBookKey, JSON.stringify(data));
-  updateBookmarkPanel();
-  showToast("🗑️ Bookmark removed");
-}
+// ---------- Font & Navigation ----------
+$('fontPlus').onclick = () => {
+  if (rendition) {
+    currentFont = Math.min(currentFont+10, 220);
+    rendition.themes.fontSize(currentFont+'%');
+    showToast(`${currentFont}%`);
+  }
+};
+$('fontMinus').onclick = () => {
+  if (rendition) {
+    currentFont = Math.max(currentFont-10, 70);
+    rendition.themes.fontSize(currentFont+'%');
+    showToast(`${currentFont}%`);
+  }
+};
+$('prev').onclick = () => rendition?.prev();
+$('next').onclick = () => rendition?.next();
 
-// ── Service Worker ────────────────────────────────────────────────
+// ---------- PWA & Service Worker ----------
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(r  => console.log('✅ SW registered:', r.scope))
-      .catch(e => console.warn('⚠️ SW failed:', e));
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW failed:', e));
   });
 }
-
-// ── PWA Install Prompt ───────────────────────────────────────────
-window.addEventListener("beforeinstallprompt", (e) => {
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  if (installBtn) installBtn.style.display = "flex";
+  $('installBtn').style.display = 'flex';
 });
-
-installBtn?.addEventListener("click", async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  if (outcome === "accepted") {
-    showToast("✅ epubSwan installed!");
-    if (installBtn) installBtn.style.display = "none";
+$('installBtn')?.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') showToast('✅ Installed!');
+    $('installBtn').style.display = 'none';
+    deferredPrompt = null;
   }
-  deferredPrompt = null;
 });
 
-window.addEventListener("appinstalled", () => {
-  if (installBtn) installBtn.style.display = "none";
-});
+// ---------- Prevent search modal from closing when scrolling ----------
+// (already independent, but ensure touchmove inside searchList does not bubble)
+$('searchList')?.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: false });
+$('searchResults')?.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: false });
 
-// ── Global Touch Optimization ────────────────────────────────────
-document.addEventListener("touchstart", () => {}, { passive: true });
+// ---------- Final touches ----------
+window.closeAllPanels = closeAllPanels;
+window.addEventListener('resize', () => { if (rendition) setTimeout(() => rendition.resize(), 100); });
+hideLoading();
+showToast('✨ epubSwan ready — swipe left/right, tap center to hide menu');
 </script>
 </body>
 </html>
